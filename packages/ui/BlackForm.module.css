@@ -1,0 +1,240 @@
+/* Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Dialog */
+.dialog {
+  background: #2a2a2a;
+  color: #e0e0e0;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.3s ease-out;
+  border: 1px solid #4a4a4a;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #3a3a3a;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: #888888;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.closeBtn:hover {
+  color: #ffffff;
+}
+
+/* Form */
+.form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.formBody {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Form Row - 한 줄에 여러 필드 */
+.formRow {
+  display: flex;
+  gap: 16px;
+}
+
+/* Form Field */
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formField label {
+  font-weight: 500;
+  color: #9e9e9e;
+  font-size: 0.85rem;
+}
+
+.required {
+  color: #e74c3c;
+  margin-left: 4px;
+}
+
+.formField input,
+.formField select,
+.formField textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #4a4a4a;
+  background-color: #333333;
+  color: #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.formField input:focus,
+.formField select:focus,
+.formField textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.formField input:disabled,
+.formField select:disabled,
+.formField textarea:disabled {
+  background-color: #252525;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+.formField input::placeholder,
+.formField textarea::placeholder {
+  color: #666666;
+}
+
+.formField select {
+  cursor: pointer;
+}
+
+.formField textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-top: 1px solid #3a3a3a;
+  background-color: #252525;
+  flex-shrink: 0;
+}
+
+.rightActions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancelBtn,
+.submitBtn,
+.deleteBtn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: #444444;
+  color: #e0e0e0;
+}
+
+.cancelBtn:hover {
+  background: #555555;
+}
+
+.submitBtn {
+  background: linear-gradient(90deg, #3498db, #2980b9);
+  color: white;
+}
+
+.submitBtn:hover {
+  background: linear-gradient(90deg, #2980b9, #2471a3);
+  transform: translateY(-1px);
+}
+
+.deleteBtn {
+  background: #c0392b;
+  color: white;
+}
+
+.deleteBtn:hover {
+  background: #a93226;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .dialog {
+    width: 95%;
+    max-height: 90vh;
+  }
+
+  .formRow {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header,
+  .formBody,
+  .actions {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
