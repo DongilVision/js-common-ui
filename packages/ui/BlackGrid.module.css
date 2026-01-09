@@ -12,11 +12,12 @@
 
 .blackGridTable th,
 .blackGridTable tbody tr td {
-  padding: 0.5rem;
+  padding: 0.25rem 0.5rem;
   border-bottom: 1px solid #3a3a3a;
   vertical-align: middle;
   background-color: #222222;
   color: #e0e0e0;
+  line-height: 1.2;
 }
 
 .blackGridTable th {
@@ -55,7 +56,6 @@
 
 .blackGridTable tbody tr:hover td {
   background-color: #4a4a4a;
-  cursor: pointer;
 }
 
 .blackGridTable tbody tr.selectedRow td {
@@ -83,11 +83,51 @@
   font-size: 0.85rem;
 }
 
+/* 체크박스 컬럼 */
+.checkboxHeader,
+.checkboxCell {
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  text-align: center;
+  padding: 0.25rem !important;
+}
+
+.checkboxHeader .checkbox,
+.checkboxCell .checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #4CAF50;
+}
+
+.blackGridTable tbody tr.checkedRow td {
+  background-color: #2a4a3a;
+}
+
+.blackGridTable tbody tr.checkedRow:hover td {
+  background-color: #3a5a4a;
+}
+
 .blackGridTable td {
   position: relative;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 숫자/금액 헤더 및 셀 우측 정렬 */
+.blackGridTable th.numberHeader {
+  text-align: right;
+}
+
+.blackGridTable td.numberCell {
+  text-align: right;
+}
+
+.blackGridTable td.numberCell .editableInput,
+.blackGridTable td.numberCell input {
+  text-align: right;
 }
 
 .editableInput {
@@ -98,7 +138,7 @@
   bottom: 0;
   width: 100%;
   height: 100%;
-  padding: 0.5rem;
+  padding: 0.25rem 0.5rem;
   border: 1px solid #667eea;
   background-color: #333333;
   color: #e0e0e0;
@@ -106,6 +146,7 @@
   font-size: inherit;
   box-sizing: border-box;
   margin: 0;
+  line-height: 1.2;
 }
 
 .editableInput:focus {
@@ -405,4 +446,176 @@
 
 .configBtn:hover {
   color: #e0e0e0;
+}
+
+/* 날짜 입력 래퍼 */
+.dateInputWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.editableDateInput {
+  flex: 1;
+  padding: 0.25rem 0.5rem;
+  padding-right: 2rem;
+  border: 1px solid #667eea;
+  background-color: #333333;
+  color: #e0e0e0;
+  border-radius: 0;
+  font-size: inherit;
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+
+.editableDateInput:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: inset 0 0 0 1px #3498db;
+}
+
+.calendarBtn {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.2rem 0.4rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.calendarBtn:hover {
+  opacity: 0.8;
+}
+
+/* 날짜 선택 모달 */
+.datePickerModal {
+  position: fixed;
+  z-index: 1100;
+  background: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  padding: 0.75rem;
+  width: 250px;
+}
+
+.datePickerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #444;
+}
+
+.monthYear {
+  color: #e0e0e0;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.navBtn {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.navBtn:hover {
+  background: #3a3a3a;
+  color: #e0e0e0;
+}
+
+.weekDays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.weekDay {
+  text-align: center;
+  color: #888;
+  font-size: 0.75rem;
+  padding: 0.25rem;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dayEmpty {
+  padding: 0.5rem;
+}
+
+.dayCell {
+  padding: 0.5rem;
+  text-align: center;
+  background: transparent;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.dayCell:hover {
+  background: #4a4a4a;
+}
+
+.daySelected {
+  background: #3498db !important;
+  color: #fff;
+}
+
+.dayToday {
+  border: 1px solid #4CAF50;
+}
+
+.datePickerFooter {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #444;
+}
+
+.todayBtn,
+.clearBtn {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.todayBtn {
+  background: #4CAF50;
+  color: white;
+}
+
+.todayBtn:hover {
+  background: #45a049;
+}
+
+.clearBtn {
+  background: #666;
+  color: #e0e0e0;
+}
+
+.clearBtn:hover {
+  background: #555;
 }

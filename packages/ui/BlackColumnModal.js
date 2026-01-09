@@ -76,6 +76,8 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
 
   // 기본 설정 상태
   const [pageTitle, setPageTitle] = useState('');
+  const [showRowNumber, setShowRowNumber] = useState(false);
+  const [showCheckbox, setShowCheckbox] = useState(false);
 
   // 폼 컬럼 상태
   const [formColumns, setFormColumns] = useState([]);
@@ -110,7 +112,9 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
         columns: result.columns || null,
         formColumns: result.form_columns || null,
         formWidth: result.form_width || 500,
-        pageTitle: result.page_title || ''
+        pageTitle: result.page_title || '',
+        showRowNumber: result.show_row_number || false,
+        showCheckbox: result.show_checkbox || false
       };
     } catch (e) {
       console.error('컬럼 설정 로드 실패:', e);
@@ -129,6 +133,8 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
       let formColumnsFromApi = null;
       let loadedFormWidth = 500;
       let loadedPageTitle = '';
+      let loadedShowRowNumber = false;
+      let loadedShowCheckbox = false;
 
       if (pageName && tableName) {
         const apiResult = await fetchColumnConfig();
@@ -144,6 +150,12 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
         if (apiResult?.pageTitle) {
           loadedPageTitle = apiResult.pageTitle;
         }
+        if (apiResult?.showRowNumber) {
+          loadedShowRowNumber = apiResult.showRowNumber;
+        }
+        if (apiResult?.showCheckbox) {
+          loadedShowCheckbox = apiResult.showCheckbox;
+        }
       }
 
       if (!isMounted) return;
@@ -155,7 +167,7 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
 
         if (onLoad) {
           const columnsForParent = mapped.map(({ id, ...rest }) => rest);
-          onLoad(columnsForParent, formColumnsFromApi, loadedFormWidth, loadedPageTitle);
+          onLoad(columnsForParent, formColumnsFromApi, loadedFormWidth, loadedPageTitle, loadedShowRowNumber);
         }
 
         // API에서 폼 컬럼을 로드한 경우 설정
@@ -168,6 +180,12 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
 
         // 페이지 제목 설정
         setPageTitle(loadedPageTitle);
+
+        // 행번호 표시 설정
+        setShowRowNumber(loadedShowRowNumber);
+
+        // 체크박스 표시 설정
+        setShowCheckbox(loadedShowCheckbox);
       }
     };
 
@@ -579,7 +597,9 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
           page_title: pageTitle,
           columns: columnsToSave,
           form_columns: formColumnsToSave,
-          form_width: formWidth
+          form_width: formWidth,
+          show_row_number: showRowNumber,
+          show_checkbox: showCheckbox
         });
       } catch (e) {
         console.error('컬럼 설정 저장 실패:', e);
@@ -725,6 +745,30 @@ const BlackColumnModal = ({ isOpen, onClose, pageName, defaultColumns = [], onLo
                   placeholder="페이지 제목 입력"
                   className={styles.settingInput}
                 />
+              </div>
+
+              <div className={styles.settingRow}>
+                <span className={styles.settingLabel}>행번호:</span>
+                <label className={styles.checkboxItem}>
+                  <input
+                    type="checkbox"
+                    checked={showRowNumber}
+                    onChange={(e) => setShowRowNumber(e.target.checked)}
+                  />
+                  <span>행번호 표시</span>
+                </label>
+              </div>
+
+              <div className={styles.settingRow}>
+                <span className={styles.settingLabel}>선택:</span>
+                <label className={styles.checkboxItem}>
+                  <input
+                    type="checkbox"
+                    checked={showCheckbox}
+                    onChange={(e) => setShowCheckbox(e.target.checked)}
+                  />
+                  <span>체크박스 표시</span>
+                </label>
               </div>
 
               <div className={styles.settingRow}>

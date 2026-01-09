@@ -23,18 +23,70 @@ const formatDate = (value) => {
   }
 };
 
+// 날짜 입력 검사 및 변환 (YYYY-MM-DD 또는 MM-DD 허용)
+const validateAndConvertDate = (value) => {
+  if (!value || value.trim() === '') return { valid: true, value: '' };
+  const trimmed = value.trim();
+
+  // YYYY-MM-DD 형식
+  const fullMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (fullMatch) {
+    const [, year, month, day] = fullMatch;
+    const m = month.padStart(2, '0');
+    const d = day.padStart(2, '0');
+    if (parseInt(m) >= 1 && parseInt(m) <= 12 && parseInt(d) >= 1 && parseInt(d) <= 31) {
+      return { valid: true, value: `${year}-${m}-${d}` };
+    }
+  }
+
+  // MM-DD 형식 (현재 연도 사용)
+  const shortMatch = trimmed.match(/^(\d{1,2})-(\d{1,2})$/);
+  if (shortMatch) {
+    const [, month, day] = shortMatch;
+    const m = month.padStart(2, '0');
+    const d = day.padStart(2, '0');
+    if (parseInt(m) >= 1 && parseInt(m) <= 12 && parseInt(d) >= 1 && parseInt(d) <= 31) {
+      const year = new Date().getFullYear();
+      return { valid: true, value: `${year}-${m}-${d}` };
+    }
+  }
+
+  return { valid: false, value: trimmed };
+};
+
+// 숫자 입력 검사
+const validateNumber = (value) => {
+  // null, undefined, 빈 문자열 처리
+  if (value == null || value === '') return { valid: true, value: '' };
+  // 숫자 타입인 경우 바로 반환
+  if (typeof value === 'number') return { valid: true, value: value };
+  // 문자열로 변환
+  const str = String(value).trim();
+  if (str === '') return { valid: true, value: '' };
+  const trimmed = str.replace(/,/g, '');
+  const num = parseFloat(trimmed);
+  if (isNaN(num)) return { valid: false, value: trimmed };
+  return { valid: true, value: num };
+};
+
 // 타입별 포맷팅
 const formatByType = (value, type) => {
   if (value == null || value === '') return '';
   switch (type) {
     case 'date':
+    case 'datetime':
       return formatDate(value);
     case 'number':
     case 'currency':
     case 'integer':
-      return Number(value).toLocaleString('ko-KR', { maximumFractionDigits: 0 });
-    case 'float':
-      return Number(value).toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    case 'float': {
+      const num = Number(value);
+      // 소수점 이하가 없으면 정수로 표시
+      if (Number.isInteger(num)) {
+        return num.toLocaleString('ko-KR', { maximumFractionDigits: 0 });
+      }
+      return num.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+    }
     default:
       return value;
   }
@@ -42,6 +94,96 @@ const formatByType = (value, type) => {
 
 // URL 체크
 const isUrl = (value) => typeof value === 'string' && (value.startsWith('http://') || value.startsWith('https://'));
+
+// 날짜 선택 모달 컴포넌트
+const DatePickerModal = ({ value, x, y, onSelect, onClose }) => {
+  const [currentDate, setCurrentDate] = useState(() => {
+    if (value) {
+      const parsed = new Date(value);
+      return isNaN(parsed.getTime()) ? new Date() : parsed;
+    }
+    return new Date();
+  });
+  const [viewDate, setViewDate] = useState(currentDate);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(`.${styles.datePickerModal}`)) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [onClose]);
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const days = [];
+
+  // 빈 셀 추가 (월 시작 전)
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    days.push(<div key={`empty-${i}`} className={styles.dayEmpty}></div>);
+  }
+
+  // 날짜 셀 추가
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const isSelected = value === dateStr;
+    const isToday = formatDate(new Date()) === dateStr;
+    days.push(
+      <button
+        key={day}
+        type="button"
+        className={`${styles.dayCell} ${isSelected ? styles.daySelected : ''} ${isToday ? styles.dayToday : ''}`}
+        onClick={() => onSelect(dateStr)}
+      >
+        {day}
+      </button>
+    );
+  }
+
+  const monthNames = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
+
+  const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
+  const prevYear = () => setViewDate(new Date(year - 1, month, 1));
+  const nextYear = () => setViewDate(new Date(year + 1, month, 1));
+
+  // 화면 경계 체크
+  const modalStyle = {
+    position: 'fixed',
+    left: Math.min(x, window.innerWidth - 260),
+    top: Math.min(y, window.innerHeight - 300)
+  };
+
+  return (
+    <div className={styles.datePickerModal} style={modalStyle}>
+      <div className={styles.datePickerHeader}>
+        <button type="button" onClick={prevYear} className={styles.navBtn}>«</button>
+        <button type="button" onClick={prevMonth} className={styles.navBtn}>‹</button>
+        <span className={styles.monthYear}>{year}년 {monthNames[month]}</span>
+        <button type="button" onClick={nextMonth} className={styles.navBtn}>›</button>
+        <button type="button" onClick={nextYear} className={styles.navBtn}>»</button>
+      </div>
+      <div className={styles.weekDays}>
+        <div className={styles.weekDay}>일</div>
+        <div className={styles.weekDay}>월</div>
+        <div className={styles.weekDay}>화</div>
+        <div className={styles.weekDay}>수</div>
+        <div className={styles.weekDay}>목</div>
+        <div className={styles.weekDay}>금</div>
+        <div className={styles.weekDay}>토</div>
+      </div>
+      <div className={styles.daysGrid}>{days}</div>
+      <div className={styles.datePickerFooter}>
+        <button type="button" onClick={() => onSelect(formatDate(new Date()))} className={styles.todayBtn}>오늘</button>
+        <button type="button" onClick={() => onSelect('')} className={styles.clearBtn}>지우기</button>
+      </div>
+    </div>
+  );
+};
 
 /**
  * BlackGrid - 통합 데이터 그리드 + 폼
@@ -76,6 +218,8 @@ const BlackGrid = ({
   onDelete,
   onAddRow,
   showRowNumber = false,
+  showCheckbox = false,
+  onSelectionChange,
   maxHeight = null,
   selectedRowId = null,
   // 컬럼 설정 통합
@@ -95,14 +239,19 @@ const BlackGrid = ({
   onFormDelete,
   // API 클라이언트 (옵션)
   api = defaultApi,
+  // 초기 필터값 (옵션)
+  initialFilterValues = {},
 }) => {
   // 컬럼 상태
   const [columns, setColumns] = useState(defaultColumns);
   const [formColumns, setFormColumns] = useState(defaultFormColumns);
   const [formWidth, setFormWidth] = useState(500);
   const [pageTitle, setPageTitle] = useState('');
+  const [rowNumberEnabled, setRowNumberEnabled] = useState(showRowNumber);
+  const [checkboxEnabled, setCheckboxEnabled] = useState(showCheckbox);
+  const [selectedRows, setSelectedRows] = useState(new Set());
   const [showColumnConfig, setShowColumnConfig] = useState(false);
-  const [filterValues, setFilterValues] = useState({});
+  const [filterValues, setFilterValues] = useState(initialFilterValues);
   const [isColumnsLoaded, setIsColumnsLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -115,7 +264,10 @@ const BlackGrid = ({
   const [editingCell, setEditingCell] = useState({ rowId: null, field: null });
   const [cellValue, setCellValue] = useState('');
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, row: null });
+  const [datePicker, setDatePicker] = useState({ visible: false, rowId: null, field: null, value: '', x: 0, y: 0 });
   const clickTimer = useRef(null);
+  const dateInputRef = useRef(null);
+  const tableContainerRef = useRef(null);
 
   // 컬럼 설정 직접 로드 (BlackColumnModal 대신)
   useEffect(() => {
@@ -135,6 +287,12 @@ const BlackGrid = ({
         }
         if (result.page_title) {
           setPageTitle(result.page_title);
+        }
+        if (result.show_row_number !== undefined) {
+          setRowNumberEnabled(!!result.show_row_number);
+        }
+        if (result.show_checkbox !== undefined) {
+          setCheckboxEnabled(!!result.show_checkbox);
         }
       } catch (e) {
         // API 실패 시 defaultColumns 사용
@@ -275,6 +433,23 @@ const BlackGrid = ({
     ? Math.ceil((pagination.totalCount ?? sortedData.length) / (pagination.pageSize || 20))
     : 1;
 
+  // selectedRowId가 있으면 해당 행으로 스크롤
+  useEffect(() => {
+    if (selectedRowId && tableContainerRef.current && displayData.length > 0) {
+      const rowIndex = displayData.findIndex(row => row.id === selectedRowId);
+      if (rowIndex >= 0) {
+        // 약간의 지연 후 스크롤 (렌더링 완료 후)
+        setTimeout(() => {
+          const container = tableContainerRef.current;
+          const rows = container?.querySelectorAll('tbody tr');
+          if (rows && rows[rowIndex]) {
+            rows[rowIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+    }
+  }, [selectedRowId, displayData]);
+
   // 정렬 요청
   const requestSort = (field, sortable) => {
     if (sortable === false) return;
@@ -335,8 +510,18 @@ const BlackGrid = ({
     }
     if (onCellChange && col.editable) {
       let initialValue = currentValue;
-      if (col.type === 'date' && currentValue?.includes?.('T')) {
+      // 날짜 타입: T 이후 시간 부분 제거
+      if ((col.type === 'date' || col.type === 'datetime') && currentValue?.includes?.('T')) {
         initialValue = currentValue.split('T')[0];
+      }
+      // 숫자 타입: 문자열로 변환 (소수점 이하가 없으면 정수로 표시)
+      if (col.type === 'number' || col.type === 'currency' || col.type === 'integer' || col.type === 'float') {
+        if (currentValue != null) {
+          const num = Number(currentValue);
+          initialValue = Number.isInteger(num) ? String(Math.round(num)) : String(num);
+        } else {
+          initialValue = '';
+        }
       }
       setEditingCell({ rowId: row.id, field });
       setCellValue(initialValue ?? '');
@@ -349,8 +534,26 @@ const BlackGrid = ({
     if (editingCell.rowId == null) return;
     const { rowId, field } = editingCell;
     const col = normalizedColumns.find(c => c.field === field);
-    const saveField = col?.editField || field;  // editField가 있으면 그 필드로 저장
-    const saveValue = customValue !== null ? customValue : cellValue;
+    const saveField = col?.editField || field;
+    let saveValue = customValue !== null ? customValue : cellValue;
+
+    // 타입별 입력 검사
+    if (col?.type === 'date' || col?.type === 'datetime') {
+      const result = validateAndConvertDate(saveValue);
+      if (!result.valid) {
+        alert('날짜 형식이 올바르지 않습니다.\n허용 형식: YYYY-MM-DD 또는 MM-DD');
+        return;
+      }
+      saveValue = result.value;
+    } else if (col?.type === 'number' || col?.type === 'currency' || col?.type === 'integer' || col?.type === 'float') {
+      const result = validateNumber(saveValue);
+      if (!result.valid) {
+        alert('숫자 형식이 올바르지 않습니다.');
+        return;
+      }
+      saveValue = result.value;
+    }
+
     const originalRow = data.find(row => row.id === rowId);
     const originalValue = col?.editField ? originalRow[col.editField] : originalRow[field];
     if (originalRow && String(originalValue) !== String(saveValue)) {
@@ -399,6 +602,42 @@ const BlackGrid = ({
     }
   };
 
+  // 체크박스 선택 핸들러
+  const handleRowSelect = (rowId, checked) => {
+    setSelectedRows(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(rowId);
+      } else {
+        newSet.delete(rowId);
+      }
+      // 콜백 호출
+      if (onSelectionChange) {
+        const selectedData = data.filter(row => newSet.has(row.id));
+        onSelectionChange(Array.from(newSet), selectedData);
+      }
+      return newSet;
+    });
+  };
+
+  // 전체 선택/해제 핸들러 (체크박스용)
+  const handleSelectAll = (checked) => {
+    setSelectedRows(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        displayData.forEach(row => newSet.add(row.id));
+      } else {
+        displayData.forEach(row => newSet.delete(row.id));
+      }
+      // 콜백 호출
+      if (onSelectionChange) {
+        const selectedData = data.filter(row => newSet.has(row.id));
+        onSelectionChange(Array.from(newSet), selectedData);
+      }
+      return newSet;
+    });
+  };
+
   // 셀 렌더링
   const renderCellContent = (row, col, rowIndex) => {
     const value = getCellValue(row, col);
@@ -433,6 +672,42 @@ const BlackGrid = ({
           </select>
         );
       }
+      // 날짜 타입: 텍스트 입력 + 달력 버튼
+      if (col.type === 'date' || col.type === 'datetime') {
+        const openDatePicker = (e) => {
+          e.stopPropagation();
+          const rect = e.currentTarget.closest('td').getBoundingClientRect();
+          setDatePicker({
+            visible: true,
+            rowId: row.id,
+            field: col.field,
+            value: cellValue || formatDate(new Date()),
+            x: rect.left,
+            y: rect.bottom + 4
+          });
+        };
+        return (
+          <div className={styles.dateInputWrapper}>
+            <input
+              type="text"
+              value={cellValue ?? ''}
+              onChange={(e) => setCellValue(e.target.value)}
+              onBlur={() => handleCellSave()}
+              onKeyDown={handleKeyDown}
+              autoFocus
+              className={styles.editableDateInput}
+              placeholder="YYYY-MM-DD"
+            />
+            <button
+              type="button"
+              className={styles.calendarBtn}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={openDatePicker}
+              title="달력"
+            >📅</button>
+          </div>
+        );
+      }
       return (
         <input
           type="text"
@@ -442,7 +717,6 @@ const BlackGrid = ({
           onKeyDown={handleKeyDown}
           autoFocus
           className={styles.editableInput}
-          placeholder={col.type === 'date' ? 'YYYY-MM-DD' : ''}
         />
       );
     }
@@ -518,26 +792,39 @@ const BlackGrid = ({
       )}
 
       {/* 테이블 */}
-      <div className={styles.tableContainer} style={maxHeight ? { maxHeight, overflowY: 'auto' } : {}}>
+      <div ref={tableContainerRef} className={styles.tableContainer} style={maxHeight ? { maxHeight, overflowY: 'auto' } : {}}>
         <table className={styles.blackGridTable}>
           <thead className={styles.stickyHeader}>
             <tr>
-              {showRowNumber && <th className={styles.rowNumberHeader}>#</th>}
-              {visibleColumns.map(col => (
-                <th
-                  key={col.field}
-                  onClick={() => requestSort(col.field, col.sortable)}
-                  className={`${styles.sortableHeader} ${col.sortable === false ? styles.noSort : ''}`}
-                  style={col.width ? { width: `${col.width}px`, minWidth: `${col.width}px` } : {}}
-                >
-                  {col.headerName}
-                  {col.sortable !== false && (
-                    <span className={styles.sortIndicator}>
-                      {sortConfig.key === col.field ? (sortConfig.direction === 'ascending' ? ' ▲' : ' ▼') : null}
-                    </span>
-                  )}
+              {checkboxEnabled && (
+                <th className={styles.checkboxHeader}>
+                  <input
+                    type="checkbox"
+                    checked={displayData.length > 0 && displayData.every(row => selectedRows.has(row.id))}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className={styles.checkbox}
+                  />
                 </th>
-              ))}
+              )}
+              {rowNumberEnabled && <th className={styles.rowNumberHeader}>#</th>}
+              {visibleColumns.map(col => {
+                const isNumberType = ['number', 'currency', 'integer', 'float'].includes(col.type);
+                return (
+                  <th
+                    key={col.field}
+                    onClick={() => requestSort(col.field, col.sortable)}
+                    className={`${styles.sortableHeader} ${col.sortable === false ? styles.noSort : ''} ${isNumberType ? styles.numberHeader : ''}`}
+                    style={col.width ? { width: `${col.width}px`, minWidth: `${col.width}px` } : {}}
+                  >
+                    {col.headerName}
+                    {col.sortable !== false && (
+                      <span className={styles.sortIndicator}>
+                        {sortConfig.key === col.field ? (sortConfig.direction === 'ascending' ? ' ▲' : ' ▼') : null}
+                      </span>
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
@@ -547,22 +834,37 @@ const BlackGrid = ({
                   key={row.id || rowIndex}
                   onClick={() => handleRowClick(row)}
                   onContextMenu={(e) => handleContextMenu(e, row)}
-                  className={row.id === selectedRowId ? styles.selectedRow : ''}
+                  className={`${row.id === selectedRowId ? styles.selectedRow : ''} ${selectedRows.has(row.id) ? styles.checkedRow : ''}`}
                 >
-                  {showRowNumber && (
+                  {checkboxEnabled && (
+                    <td className={styles.checkboxCell} onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.has(row.id)}
+                        onChange={(e) => handleRowSelect(row.id, e.target.checked)}
+                        className={styles.checkbox}
+                      />
+                    </td>
+                  )}
+                  {rowNumberEnabled && (
                     <td className={styles.rowNumberCell}>
                       {pagination ? (pagination.page - 1) * pagination.pageSize + rowIndex + 1 : rowIndex + 1}
                     </td>
                   )}
                   {visibleColumns.map(col => {
                     const value = getCellValue(row, col);
+                    const isNumberType = ['number', 'currency', 'integer', 'float'].includes(col.type);
+                    const cellClass = [
+                      isUrl(value) ? styles.urlCell : '',
+                      isNumberType ? styles.numberCell : ''
+                    ].filter(Boolean).join(' ');
                     return (
                       <td
                         key={col.field}
                         onClick={(e) => handleCellClick(e, value, col, row)}
                         onDoubleClick={() => handleDoubleClick(row, col.field, row[col.field], col)}
                         style={col.width ? { width: `${col.width}px`, minWidth: `${col.width}px` } : {}}
-                        className={isUrl(value) ? styles.urlCell : ''}
+                        className={cellClass}
                       >
                         {renderCellContent(row, col, rowIndex)}
                       </td>
@@ -572,7 +874,7 @@ const BlackGrid = ({
               ))
             ) : (
               <tr>
-                <td colSpan={visibleColumns.length + (showRowNumber ? 1 : 0)} className={styles.noData}>
+                <td colSpan={visibleColumns.length + (rowNumberEnabled ? 1 : 0) + (checkboxEnabled ? 1 : 0)} className={styles.noData}>
                   검색된 데이터 없음
                 </td>
               </tr>
@@ -607,16 +909,37 @@ const BlackGrid = ({
         </div>
       )}
 
+      {/* 날짜 선택 모달 */}
+      {datePicker.visible && (
+        <DatePickerModal
+          value={datePicker.value}
+          x={datePicker.x}
+          y={datePicker.y}
+          onSelect={(date) => {
+            setCellValue(date);
+            setDatePicker({ visible: false, rowId: null, field: null, value: '', x: 0, y: 0 });
+          }}
+          onClose={() => {
+            setDatePicker({ visible: false, rowId: null, field: null, value: '', x: 0, y: 0 });
+          }}
+        />
+      )}
+
       {/* 컬럼 설정 모달 (열릴 때만 마운트) */}
       {pageName && showColumnConfig && (
         <BlackColumnModal
           isOpen={showColumnConfig}
-          onClose={() => setShowColumnConfig(false)}
+          onClose={() => {
+            setShowColumnConfig(false);
+            // 모달이 닫힐 때 설정 다시 로드
+            setIsColumnsLoaded(false);
+          }}
           pageName={pageName}
           tableName={tableName}
           defaultColumns={columns}
           onSave={setColumns}
           onFormColumnsSave={setFormColumns}
+          api={api}
         />
       )}
 
