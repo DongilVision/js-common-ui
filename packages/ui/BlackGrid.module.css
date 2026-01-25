@@ -1,6 +1,37 @@
 .tableContainer {
   width: 100%;
-  overflow-x: auto;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 스크롤바 스타일 (Webkit 브라우저) */
+.tableContainer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.tableContainer::-webkit-scrollbar-corner {
+  background: #1a1a1a;
+}
+
+/* Firefox 스크롤바 */
+.tableContainer {
+  scrollbar-width: thin;
+  scrollbar-color: #555 #1a1a1a;
 }
 
 .blackGridTable {
@@ -217,6 +248,8 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  flex: 1;
+  min-height: 0;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid #3a3a3a;
